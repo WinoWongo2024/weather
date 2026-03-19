@@ -3,22 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EdgeWeather | Global Forecast</title>
-    <link rel="stylesheet" href="style.css">
+    <title>JS-Computer-Sim</title>
+    <style>
+        body { font-family: 'Courier New', monospace; background: #1e1e1e; color: #00ff00; padding: 20px; }
+        .container { display: flex; gap: 20px; }
+        .panel { border: 1px solid #00ff00; padding: 15px; border-radius: 5px; }
+        .controls { margin-bottom: 20px; }
+        button { background: #00ff00; color: black; border: none; padding: 10px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #00cc00; }
+        #memory-view { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; font-size: 0.8rem; }
+        .mem-slot { border: 1px solid #333; padding: 2px; text-align: center; }
+        .highlight { background: #00ff00; color: black; }
+    </style>
 </head>
 <body>
+
+    <h1>8-Bit Simulator</h1>
+
+    <div class="controls">
+        <button onclick="loadProgram()">Load Sample Program</button>
+        <button onclick="step()">Step Instruction</button>
+        <button onclick="resetSim()">Reset</button>
+    </div>
+
     <div class="container">
-        <h1>EdgeWeather</h1>
-        <div class="search-box">
-            <input type="text" id="cityInput" placeholder="Enter city (e.g., London, Tokyo)...">
-            <button onclick="getWeather()">Check Weather</button>
+        <div class="panel">
+            <h3>CPU Registers</h3>
+            <p>Accumulator: <span id="reg-acc">0</span></p>
+            <p>Program Counter: <span id="reg-pc">0</span></p>
+            <p>Status: <span id="status">IDLE</span></p>
         </div>
-        <div id="weatherResult" class="card">
-            <h2 id="cityName">Search for a city!</h2>
-            <p id="temp">--°C</p>
-            <p id="desc">EdgeOne Powered Simulation</p>
+
+        <div class="panel">
+            <h3>RAM (256 Bytes)</h3>
+            <div id="memory-view"></div>
         </div>
     </div>
-    <script src="script.js"></script>
+
+    <script>
+        // --- SIMULATOR LOGIC ---
+        let memory = new Array(256).fill(0);
+        let cpu = { acc: 0, pc: 0, halted: false };
+
+        // Initialize Memory Grid
+        function initUI() {
+            const grid = document.getElementById('memory-view');
+            grid.innerHTML = '';
+            for (let i = 0; i < 64; i++) { // Showing first 64 for brevity
+                let div = document.createElement('div');
+                div.className = 'mem-slot';
+                div.id = `mem-${i}`;
+                div.innerText = '00';
+                grid.appendChild(div);
+            }
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('reg-acc').innerText = cpu.acc;
+            document.getElementById('reg-pc').innerText = cpu.pc;
+            document.getElementById('status').innerText = cpu.halted ? "HALTED" : "RUNNING";
+            
+            // Highlight current instruction in memory
+            document.querySelectorAll('.mem-slot').forEach(el => el.classList.remove('highlight'));
+            const currentSlot = document.getElementById(`mem-${cpu.pc}`);
+            if (currentSlot) currentSlot.classList.add('highlight');
+        }
+
+        function loadProgram() {
+            resetSim();
+            // Simple Program: 
+            // [1, 10] -> LOAD 10
+            // [2, 5]  -> ADD 5
+            // [0]     -> HALT (Result should be 15)
+            memory[0] = 1; memory[1] = 10;
+            memory[2] = 2; memory[3] = 5;
+            memory[4] = 0;
+            
+            for(let i=0; i<5; i++) {
+                document.getElementById(`mem-${i}`).innerText = memory[i];
+            }
+            updateUI();
+        }
+
+        function step() {
+            if (cpu.halted) return;
+
+            let opcode = memory[cpu.pc];
+
+            switch(opcode) {
+                case 1: // LOAD
+                    cpu.acc = memory[cpu.pc + 1];
+                    cpu.pc += 2;
+                    break;
+                case 2: // ADD
+                    cpu.acc += memory[cpu.pc + 1];
+                    cpu.pc += 2;
+                    break;
+                case 0: // HALT
+                    cpu.halted = true;
+                    break;
+                default:
+                    console.log("Unknown Instruction");
+                    cpu.halted = true;
+            }
+            updateUI();
+        }
+
+        function resetSim() {
+            cpu = { acc: 0, pc: 0, halted: false };
+            memory.fill(0);
+            initUI();
+        }
+
+        initUI();
+    </script>
 </body>
 </html>
