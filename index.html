@@ -2,168 +2,131 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CloudOS Terminal</title>
+    <title>CloudOS Pro - Simulator</title>
     <style>
-        :root {
-            --glass: rgba(255, 255, 255, 0.1);
-            --blur: blur(10px);
-            --border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        body, html { 
-            margin: 0; padding: 0; height: 100%; width: 100%;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-            background: url('https://images.unsplash.com/photo-1477346611705-65d1883cee1e?auto=format&fit=crop&w=1920') center/cover;
-        }
-
-        /* --- LOGIN PAGE --- */
-        #login-screen {
-            position: fixed; inset: 0; z-index: 1000;
-            background: rgba(0,0,0,0.8); backdrop-filter: var(--blur);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: white; transition: 0.5s;
-        }
-        .login-box { text-align: center; }
-        .login-box img { width: 100px; border-radius: 50%; margin-bottom: 20px; }
-        .login-box input { 
-            padding: 10px; border-radius: 20px; border: none; outline: none; 
-            text-align: center; width: 200px; 
-        }
-
-        /* --- DESKTOP --- */
-        #desktop { height: calc(100vh - 45px); position: relative; padding: 20px; }
+        :root { --glass: rgba(30, 30, 30, 0.8); --accent: #0078d7; --blur: blur(15px); }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; font-family: 'Segoe UI', sans-serif; overflow: hidden; background: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920') center/cover; }
         
-        .icon { 
-            width: 70px; display: flex; flex-direction: column; align-items: center; 
-            color: white; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            margin-bottom: 20px; transition: transform 0.2s;
-        }
-        .icon:hover { transform: scale(1.1); }
-        .icon img { width: 50px; height: 50px; margin-bottom: 5px; }
+        /* --- BSOD --- */
+        #bsod { position: fixed; inset: 0; background: #0000aa; color: white; padding: 50px; z-index: 9999; display: none; font-family: monospace; }
+        #bsod h1 { font-size: 5rem; margin: 0; }
 
-        /* --- WINDOWS --- */
-        .window {
-            position: absolute; width: 600px; height: 400px;
-            background: rgba(20, 20, 20, 0.85); backdrop-filter: var(--blur);
-            border: var(--border); border-radius: 8px; color: white;
-            display: none; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
-        .win-header { 
-            padding: 10px; background: rgba(255,255,255,0.1); 
-            display: flex; justify-content: space-between; cursor: move;
-        }
-        .win-body { flex: 1; padding: 15px; overflow: auto; }
-        .close-btn { color: #ff5f56; cursor: pointer; font-weight: bold; }
+        /* --- DESKTOP & WINDOWS --- */
+        #desktop { height: calc(100vh - 45px); position: relative; padding: 20px; z-index: 1; }
+        .window { position: absolute; width: 400px; height: 300px; background: var(--glass); backdrop-filter: var(--blur); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; display: none; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; }
+        .win-header { padding: 10px; background: rgba(255,255,255,0.1); display: flex; justify-content: space-between; cursor: move; align-items: center; }
+        .win-body { flex: 1; padding: 15px; overflow: auto; color: #eee; }
+        .close-btn { background: #ff5f56; width: 12px; height: 12px; border-radius: 50%; cursor: pointer; }
+
+        /* --- START MENU --- */
+        #start-menu { position: absolute; bottom: 50px; left: 10px; width: 250px; background: var(--glass); backdrop-filter: var(--blur); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; display: none; flex-direction: column; padding: 10px; z-index: 100; }
+        .start-item { padding: 10px; cursor: pointer; border-radius: 5px; color: white; }
+        .start-item:hover { background: var(--accent); }
 
         /* --- TASKBAR --- */
-        #taskbar {
-            position: fixed; bottom: 0; width: 100%; height: 45px;
-            background: var(--glass); backdrop-filter: var(--blur);
-            border-top: var(--border); display: flex; align-items: center;
-            justify-content: space-between; padding: 0 15px; box-sizing: border-box;
-            color: white; font-size: 14px;
-        }
-        .status-icons { display: flex; gap: 15px; align-items: center; }
+        #taskbar { position: fixed; bottom: 0; width: 100%; height: 45px; background: rgba(0,0,0,0.8); backdrop-filter: var(--blur); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; box-sizing: border-box; z-index: 101; }
+        #start-btn { background: var(--accent); color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
 
-        /* --- APPS --- */
-        #terminal-out { font-family: monospace; color: #00ff00; }
-        #browser-frame { width: 100%; height: 90%; border: none; background: white; }
+        /* --- APPS SPECIFIC --- */
+        #notepad-text { width: 100%; height: 90%; background: transparent; color: white; border: none; outline: none; resize: none; }
+        .file-item { cursor: pointer; padding: 5px; display: flex; align-items: center; gap: 10px; }
+        .file-item:hover { background: rgba(255,255,255,0.1); }
     </style>
 </head>
 <body>
 
-    <div id="login-screen">
-        <div class="login-box">
-            <img src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="User">
-            <h2>Welcome Back</h2>
-            <input type="password" id="pass-input" placeholder="Enter Password (hint: 1234)" onkeypress="checkLogin(event)">
+<div id="bsod">
+    <h1>:(</h1>
+    <br><p>Your PC ran into a problem and needs to restart. We're just collecting some error info, and then we'll restart for you.</p>
+    <p>Stop Code: CRITICAL_PROCESS_DIED</p>
+    <p>Press any key to "reboot"...</p>
+</div>
+
+<div id="desktop" onclick="hideStart()">
+    <div style="display:flex; flex-direction:column; gap:10px;">
+        <button onclick="openWin('win-files')" style="background:none; border:none; color:white; cursor:pointer;">📁 Files</button>
+        <button onclick="openWin('win-taskmgr')" style="background:none; border:none; color:white; cursor:pointer;">⚙️ Task Mgr</button>
+    </div>
+
+    <div id="win-notepad" class="window" style="top:100px; left:100px;">
+        <div class="win-header"><span>Notepad</span><div class="close-btn" onclick="closeWin('win-notepad')"></div></div>
+        <div class="win-body"><textarea id="notepad-text" placeholder="Start typing..."></textarea></div>
+    </div>
+
+    <div id="win-taskmgr" class="window" style="top:150px; left:150px;">
+        <div class="win-header"><span>Task Manager</span><div class="close-btn" onclick="closeWin('win-taskmgr')"></div></div>
+        <div class="win-body">
+            <div id="task-list"></div>
+            <hr>
+            <button onclick="triggerBSOD()" style="color:red; background:none; border:1px solid red; cursor:pointer;">End System Process (Dangerous)</button>
         </div>
     </div>
 
-    <div id="desktop">
-        <div class="icon" onclick="openWin('win-terminal')">🖥️<br>Terminal</div>
-        <div class="icon" onclick="openWin('win-files')">📁<br>Files</div>
-        <div class="icon" onclick="openWin('win-browser')">🌐<br>Browser</div>
-
-        <div id="win-terminal" class="window" style="top:50px; left:50px;">
-            <div class="win-header"><span>Terminal</span><span class="close-btn" onclick="closeWin('win-terminal')">●</span></div>
-            <div class="win-body">
-                <div id="terminal-out">Type 'help' to begin...</div>
-                <span>> </span><input type="text" id="term-in" style="background:transparent; border:none; color:#0f0; outline:none; width:80%;">
-            </div>
-        </div>
-
-        <div id="win-browser" class="window" style="top:80px; left:120px; width:800px; height:500px;">
-            <div class="win-header"><span>Browser</span><span class="close-btn" onclick="closeWin('win-browser')">●</span></div>
-            <div style="padding: 5px; background: #eee;">
-                <input type="text" id="browser-url" value="https://www.wikipedia.org" style="width: 80%">
-                <button onclick="navBrowser()">Go</button>
-            </div>
-            <iframe id="browser-frame" src="https://www.wikipedia.org"></iframe>
-        </div>
+    <div id="win-files" class="window" style="top:50px; left:300px;">
+        <div class="win-header"><span>File Explorer</span><div class="close-btn" onclick="closeWin('win-files')"></div></div>
+        <div class="win-body" id="file-list"></div>
     </div>
+</div>
 
-    <div id="taskbar">
-        <div><strong> CloudOS</strong></div>
-        <div class="status-icons">
-            <span id="battery">🔋 85%</span>
-            <span id="clock">12:00 PM</span>
-        </div>
-    </div>
+<div id="start-menu">
+    <div class="start-item" onclick="openWin('win-notepad')">📝 Notepad</div>
+    <div class="start-item" onclick="openWin('win-files')">📁 File Explorer</div>
+    <div class="start-item" onclick="openWin('win-taskmgr')">⚙️ Task Manager</div>
+    <div class="start-item" onclick="location.reload()">🔄 Restart</div>
+</div>
 
-    <script>
-        // --- LOGIN LOGIC ---
-        function checkLogin(e) {
-            if (e.key === "Enter") {
-                if (document.getElementById('pass-input').value === "1234") {
-                    document.getElementById('login-screen').style.opacity = "0";
-                    setTimeout(() => document.getElementById('login-screen').remove(), 500);
-                }
-            }
-        }
+<div id="taskbar">
+    <button id="start-btn" onclick="toggleStart(event)">START</button>
+    <div style="color:white;" id="clock">12:00</div>
+</div>
 
-        // --- CLOCK & BATTERY ---
-        function updateSystemInfo() {
-            const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            
-            // Randomize battery slightly for "realism"
-            const bat = 90 - Math.floor(now.getMinutes() / 10);
-            document.getElementById('battery').innerText = `🔋 ${bat}%`;
-        }
-        setInterval(updateSystemInfo, 1000);
+<script>
+    let openApps = [];
 
-        // --- WINDOW MANAGEMENT ---
-        function openWin(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeWin(id) { document.getElementById(id).style.display = 'none'; }
+    // --- SYSTEM LOGIC ---
+    function toggleStart(e) { e.stopPropagation(); const m = document.getElementById('start-menu'); m.style.display = m.style.display === 'flex' ? 'none' : 'flex'; }
+    function hideStart() { document.getElementById('start-menu').style.display = 'none'; }
 
-        // --- TERMINAL LOGIC ---
-        const termInput = document.getElementById('term-in');
-        const termOut = document.getElementById('terminal-out');
-        
-        termInput.addEventListener('keypress', (e) => {
-            if (e.key === "Enter") {
-                const cmd = termInput.value.toLowerCase();
-                let res = "";
-                if (cmd === "help") res = "Available: help, date, clear, about, ls";
-                else if (cmd === "date") res = new Date().toString();
-                else if (cmd === "ls") res = "documents/  photos/  system.sys";
-                else if (cmd === "clear") { termOut.innerHTML = ""; termInput.value = ""; return; }
-                else res = "Command not found: " + cmd;
+    function openWin(id) {
+        document.getElementById(id).style.display = 'flex';
+        if(!openApps.includes(id)) openApps.push(id);
+        updateTaskMgr();
+    }
 
-                termOut.innerHTML += `<div>> ${cmd}</div><div>${res}</div>`;
-                termInput.value = "";
-            }
+    function closeWin(id) {
+        document.getElementById(id).style.display = 'none';
+        openApps = openApps.filter(app => app !== id);
+        updateTaskMgr();
+    }
+
+    function updateTaskMgr() {
+        const list = document.getElementById('task-list');
+        list.innerHTML = "<strong>Active Processes:</strong><br>";
+        openApps.forEach(app => {
+            list.innerHTML += `<div style="display:flex; justify-content:space-between; margin:5px 0;">
+                ${app} <button onclick="closeWin('${app}')">End Task</button>
+            </div>`;
         });
+    }
 
-        // --- BROWSER LOGIC ---
-        function navBrowser() {
-            let url = document.getElementById('browser-url').value;
-            if (!url.startsWith('http')) url = 'https://' + url;
-            document.getElementById('browser-frame').src = url;
-        }
-    </script>
+    // --- FILE SYSTEM ---
+    const files = ["User_Guide.txt", "System_Log.log", "Secrets.zip", "Budget_2026.xlsx"];
+    function renderFiles() {
+        const container = document.getElementById('file-list');
+        container.innerHTML = files.map(f => `<div class="file-item">📄 ${f}</div>`).join('');
+    }
+
+    // --- ERRORS ---
+    function triggerBSOD() {
+        document.getElementById('bsod').style.display = 'block';
+        window.addEventListener('keydown', () => location.reload());
+    }
+
+    // --- INITIALIZE ---
+    setInterval(() => {
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }, 1000);
+    renderFiles();
+</script>
 </body>
 </html>
