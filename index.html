@@ -2,99 +2,168 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>MyJS-OS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudOS Terminal</title>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: sans-serif; }
-        #desktop { 
-            background: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b') center/cover;
-            height: calc(100vh - 40px); position: relative; 
+        :root {
+            --glass: rgba(255, 255, 255, 0.1);
+            --blur: blur(10px);
+            --border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        #taskbar { 
-            height: 40px; background: rgba(0,0,0,0.8); display: flex; align-items: center; padding: 0 10px; color: white; 
+
+        body, html { 
+            margin: 0; padding: 0; height: 100%; width: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: url('https://images.unsplash.com/photo-1477346611705-65d1883cee1e?auto=format&fit=crop&w=1920') center/cover;
         }
-        .icon { width: 60px; text-align: center; color: white; cursor: pointer; padding: 10px; }
-        .window { 
-            position: absolute; width: 400px; height: 300px; background: white; border-radius: 5px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: none; flex-direction: column;
+
+        /* --- LOGIN PAGE --- */
+        #login-screen {
+            position: fixed; inset: 0; z-index: 1000;
+            background: rgba(0,0,0,0.8); backdrop-filter: var(--blur);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; transition: 0.5s;
         }
-        .window-header { 
-            background: #333; color: white; padding: 10px; cursor: move; 
-            display: flex; justify-content: space-between; border-radius: 5px 5px 0 0;
+        .login-box { text-align: center; }
+        .login-box img { width: 100px; border-radius: 50%; margin-bottom: 20px; }
+        .login-box input { 
+            padding: 10px; border-radius: 20px; border: none; outline: none; 
+            text-align: center; width: 200px; 
         }
-        .window-body { flex: 1; padding: 10px; overflow: auto; }
-        .terminal-body { background: black; color: #0f0; font-family: monospace; height: 100%; }
-        .close-btn { cursor: pointer; color: red; }
+
+        /* --- DESKTOP --- */
+        #desktop { height: calc(100vh - 45px); position: relative; padding: 20px; }
+        
+        .icon { 
+            width: 70px; display: flex; flex-direction: column; align-items: center; 
+            color: white; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 20px; transition: transform 0.2s;
+        }
+        .icon:hover { transform: scale(1.1); }
+        .icon img { width: 50px; height: 50px; margin-bottom: 5px; }
+
+        /* --- WINDOWS --- */
+        .window {
+            position: absolute; width: 600px; height: 400px;
+            background: rgba(20, 20, 20, 0.85); backdrop-filter: var(--blur);
+            border: var(--border); border-radius: 8px; color: white;
+            display: none; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .win-header { 
+            padding: 10px; background: rgba(255,255,255,0.1); 
+            display: flex; justify-content: space-between; cursor: move;
+        }
+        .win-body { flex: 1; padding: 15px; overflow: auto; }
+        .close-btn { color: #ff5f56; cursor: pointer; font-weight: bold; }
+
+        /* --- TASKBAR --- */
+        #taskbar {
+            position: fixed; bottom: 0; width: 100%; height: 45px;
+            background: var(--glass); backdrop-filter: var(--blur);
+            border-top: var(--border); display: flex; align-items: center;
+            justify-content: space-between; padding: 0 15px; box-sizing: border-box;
+            color: white; font-size: 14px;
+        }
+        .status-icons { display: flex; gap: 15px; align-items: center; }
+
+        /* --- APPS --- */
+        #terminal-out { font-family: monospace; color: #00ff00; }
+        #browser-frame { width: 100%; height: 90%; border: none; background: white; }
     </style>
 </head>
 <body>
 
-<div id="desktop">
-    <div class="icon" onclick="openWindow('terminal')">💻<br>Terminal</div>
-    <div class="icon" onclick="openWindow('files')">📁<br>Files</div>
-
-    <div id="terminal" class="window" style="top: 50px; left: 50px;">
-        <div class="window-header">
-            <span>Terminal</span>
-            <span class="close-btn" onclick="closeWindow('terminal')">✖</span>
-        </div>
-        <div class="window-body terminal-body">
-            <div>Welcome to JS-OS v1.0...</div>
-            <div>$ <input type="text" id="term-input" style="background:transparent; border:none; color:#0f0; outline:none;"></div>
+    <div id="login-screen">
+        <div class="login-box">
+            <img src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="User">
+            <h2>Welcome Back</h2>
+            <input type="password" id="pass-input" placeholder="Enter Password (hint: 1234)" onkeypress="checkLogin(event)">
         </div>
     </div>
 
-    <div id="files" class="window" style="top: 100px; left: 100px;">
-        <div class="window-header">
-            <span>File Explorer</span>
-            <span class="close-btn" onclick="closeWindow('files')">✖</span>
+    <div id="desktop">
+        <div class="icon" onclick="openWin('win-terminal')">🖥️<br>Terminal</div>
+        <div class="icon" onclick="openWin('win-files')">📁<br>Files</div>
+        <div class="icon" onclick="openWin('win-browser')">🌐<br>Browser</div>
+
+        <div id="win-terminal" class="window" style="top:50px; left:50px;">
+            <div class="win-header"><span>Terminal</span><span class="close-btn" onclick="closeWin('win-terminal')">●</span></div>
+            <div class="win-body">
+                <div id="terminal-out">Type 'help' to begin...</div>
+                <span>> </span><input type="text" id="term-in" style="background:transparent; border:none; color:#0f0; outline:none; width:80%;">
+            </div>
         </div>
-        <div class="window-body">
-            <ul>
-                <li>📄 Documents</li>
-                <li>🖼️ Photos</li>
-                <li>🎵 Music</li>
-            </ul>
+
+        <div id="win-browser" class="window" style="top:80px; left:120px; width:800px; height:500px;">
+            <div class="win-header"><span>Browser</span><span class="close-btn" onclick="closeWin('win-browser')">●</span></div>
+            <div style="padding: 5px; background: #eee;">
+                <input type="text" id="browser-url" value="https://www.wikipedia.org" style="width: 80%">
+                <button onclick="navBrowser()">Go</button>
+            </div>
+            <iframe id="browser-frame" src="https://www.wikipedia.org"></iframe>
         </div>
     </div>
-</div>
 
-<div id="taskbar">
-    <strong>START</strong>
-</div>
+    <div id="taskbar">
+        <div><strong> CloudOS</strong></div>
+        <div class="status-icons">
+            <span id="battery">🔋 85%</span>
+            <span id="clock">12:00 PM</span>
+        </div>
+    </div>
 
-<script>
-    function openWindow(id) {
-        document.getElementById(id).style.display = 'flex';
-        // Bring to front
-        document.getElementById(id).style.zIndex = "100";
-    }
-
-    function closeWindow(id) {
-        document.getElementById(id).style.display = 'none';
-    }
-
-    // Simple Drag Logic
-    const windows = document.querySelectorAll('.window');
-    windows.forEach(win => {
-        const header = win.querySelector('.window-header');
-        header.onmousedown = (e) => {
-            let shiftX = e.clientX - win.getBoundingClientRect().left;
-            let shiftY = e.clientY - win.getBoundingClientRect().top;
-
-            function moveAt(pageX, pageY) {
-                win.style.left = pageX - shiftX + 'px';
-                win.style.top = pageY - shiftY + 'px';
+    <script>
+        // --- LOGIN LOGIC ---
+        function checkLogin(e) {
+            if (e.key === "Enter") {
+                if (document.getElementById('pass-input').value === "1234") {
+                    document.getElementById('login-screen').style.opacity = "0";
+                    setTimeout(() => document.getElementById('login-screen').remove(), 500);
+                }
             }
+        }
 
-            function onMouseMove(event) { moveAt(event.pageX, event.pageY); }
-            document.addEventListener('mousemove', onMouseMove);
-            header.onmouseup = () => {
-                document.removeEventListener('mousemove', onMouseMove);
-                header.onmouseup = null;
-            };
-        };
-    });
-</script>
+        // --- CLOCK & BATTERY ---
+        function updateSystemInfo() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            // Randomize battery slightly for "realism"
+            const bat = 90 - Math.floor(now.getMinutes() / 10);
+            document.getElementById('battery').innerText = `🔋 ${bat}%`;
+        }
+        setInterval(updateSystemInfo, 1000);
 
+        // --- WINDOW MANAGEMENT ---
+        function openWin(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeWin(id) { document.getElementById(id).style.display = 'none'; }
+
+        // --- TERMINAL LOGIC ---
+        const termInput = document.getElementById('term-in');
+        const termOut = document.getElementById('terminal-out');
+        
+        termInput.addEventListener('keypress', (e) => {
+            if (e.key === "Enter") {
+                const cmd = termInput.value.toLowerCase();
+                let res = "";
+                if (cmd === "help") res = "Available: help, date, clear, about, ls";
+                else if (cmd === "date") res = new Date().toString();
+                else if (cmd === "ls") res = "documents/  photos/  system.sys";
+                else if (cmd === "clear") { termOut.innerHTML = ""; termInput.value = ""; return; }
+                else res = "Command not found: " + cmd;
+
+                termOut.innerHTML += `<div>> ${cmd}</div><div>${res}</div>`;
+                termInput.value = "";
+            }
+        });
+
+        // --- BROWSER LOGIC ---
+        function navBrowser() {
+            let url = document.getElementById('browser-url').value;
+            if (!url.startsWith('http')) url = 'https://' + url;
+            document.getElementById('browser-frame').src = url;
+        }
+    </script>
 </body>
 </html>
