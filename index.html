@@ -2,121 +2,99 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JS-Computer-Sim</title>
+    <title>MyJS-OS</title>
     <style>
-        body { font-family: 'Courier New', monospace; background: #1e1e1e; color: #00ff00; padding: 20px; }
-        .container { display: flex; gap: 20px; }
-        .panel { border: 1px solid #00ff00; padding: 15px; border-radius: 5px; }
-        .controls { margin-bottom: 20px; }
-        button { background: #00ff00; color: black; border: none; padding: 10px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #00cc00; }
-        #memory-view { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; font-size: 0.8rem; }
-        .mem-slot { border: 1px solid #333; padding: 2px; text-align: center; }
-        .highlight { background: #00ff00; color: black; }
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: sans-serif; }
+        #desktop { 
+            background: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b') center/cover;
+            height: calc(100vh - 40px); position: relative; 
+        }
+        #taskbar { 
+            height: 40px; background: rgba(0,0,0,0.8); display: flex; align-items: center; padding: 0 10px; color: white; 
+        }
+        .icon { width: 60px; text-align: center; color: white; cursor: pointer; padding: 10px; }
+        .window { 
+            position: absolute; width: 400px; height: 300px; background: white; border-radius: 5px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: none; flex-direction: column;
+        }
+        .window-header { 
+            background: #333; color: white; padding: 10px; cursor: move; 
+            display: flex; justify-content: space-between; border-radius: 5px 5px 0 0;
+        }
+        .window-body { flex: 1; padding: 10px; overflow: auto; }
+        .terminal-body { background: black; color: #0f0; font-family: monospace; height: 100%; }
+        .close-btn { cursor: pointer; color: red; }
     </style>
 </head>
 <body>
 
-    <h1>8-Bit Simulator</h1>
+<div id="desktop">
+    <div class="icon" onclick="openWindow('terminal')">💻<br>Terminal</div>
+    <div class="icon" onclick="openWindow('files')">📁<br>Files</div>
 
-    <div class="controls">
-        <button onclick="loadProgram()">Load Sample Program</button>
-        <button onclick="step()">Step Instruction</button>
-        <button onclick="resetSim()">Reset</button>
-    </div>
-
-    <div class="container">
-        <div class="panel">
-            <h3>CPU Registers</h3>
-            <p>Accumulator: <span id="reg-acc">0</span></p>
-            <p>Program Counter: <span id="reg-pc">0</span></p>
-            <p>Status: <span id="status">IDLE</span></p>
+    <div id="terminal" class="window" style="top: 50px; left: 50px;">
+        <div class="window-header">
+            <span>Terminal</span>
+            <span class="close-btn" onclick="closeWindow('terminal')">✖</span>
         </div>
-
-        <div class="panel">
-            <h3>RAM (256 Bytes)</h3>
-            <div id="memory-view"></div>
+        <div class="window-body terminal-body">
+            <div>Welcome to JS-OS v1.0...</div>
+            <div>$ <input type="text" id="term-input" style="background:transparent; border:none; color:#0f0; outline:none;"></div>
         </div>
     </div>
 
-    <script>
-        // --- SIMULATOR LOGIC ---
-        let memory = new Array(256).fill(0);
-        let cpu = { acc: 0, pc: 0, halted: false };
+    <div id="files" class="window" style="top: 100px; left: 100px;">
+        <div class="window-header">
+            <span>File Explorer</span>
+            <span class="close-btn" onclick="closeWindow('files')">✖</span>
+        </div>
+        <div class="window-body">
+            <ul>
+                <li>📄 Documents</li>
+                <li>🖼️ Photos</li>
+                <li>🎵 Music</li>
+            </ul>
+        </div>
+    </div>
+</div>
 
-        // Initialize Memory Grid
-        function initUI() {
-            const grid = document.getElementById('memory-view');
-            grid.innerHTML = '';
-            for (let i = 0; i < 64; i++) { // Showing first 64 for brevity
-                let div = document.createElement('div');
-                div.className = 'mem-slot';
-                div.id = `mem-${i}`;
-                div.innerText = '00';
-                grid.appendChild(div);
+<div id="taskbar">
+    <strong>START</strong>
+</div>
+
+<script>
+    function openWindow(id) {
+        document.getElementById(id).style.display = 'flex';
+        // Bring to front
+        document.getElementById(id).style.zIndex = "100";
+    }
+
+    function closeWindow(id) {
+        document.getElementById(id).style.display = 'none';
+    }
+
+    // Simple Drag Logic
+    const windows = document.querySelectorAll('.window');
+    windows.forEach(win => {
+        const header = win.querySelector('.window-header');
+        header.onmousedown = (e) => {
+            let shiftX = e.clientX - win.getBoundingClientRect().left;
+            let shiftY = e.clientY - win.getBoundingClientRect().top;
+
+            function moveAt(pageX, pageY) {
+                win.style.left = pageX - shiftX + 'px';
+                win.style.top = pageY - shiftY + 'px';
             }
-            updateUI();
-        }
 
-        function updateUI() {
-            document.getElementById('reg-acc').innerText = cpu.acc;
-            document.getElementById('reg-pc').innerText = cpu.pc;
-            document.getElementById('status').innerText = cpu.halted ? "HALTED" : "RUNNING";
-            
-            // Highlight current instruction in memory
-            document.querySelectorAll('.mem-slot').forEach(el => el.classList.remove('highlight'));
-            const currentSlot = document.getElementById(`mem-${cpu.pc}`);
-            if (currentSlot) currentSlot.classList.add('highlight');
-        }
+            function onMouseMove(event) { moveAt(event.pageX, event.pageY); }
+            document.addEventListener('mousemove', onMouseMove);
+            header.onmouseup = () => {
+                document.removeEventListener('mousemove', onMouseMove);
+                header.onmouseup = null;
+            };
+        };
+    });
+</script>
 
-        function loadProgram() {
-            resetSim();
-            // Simple Program: 
-            // [1, 10] -> LOAD 10
-            // [2, 5]  -> ADD 5
-            // [0]     -> HALT (Result should be 15)
-            memory[0] = 1; memory[1] = 10;
-            memory[2] = 2; memory[3] = 5;
-            memory[4] = 0;
-            
-            for(let i=0; i<5; i++) {
-                document.getElementById(`mem-${i}`).innerText = memory[i];
-            }
-            updateUI();
-        }
-
-        function step() {
-            if (cpu.halted) return;
-
-            let opcode = memory[cpu.pc];
-
-            switch(opcode) {
-                case 1: // LOAD
-                    cpu.acc = memory[cpu.pc + 1];
-                    cpu.pc += 2;
-                    break;
-                case 2: // ADD
-                    cpu.acc += memory[cpu.pc + 1];
-                    cpu.pc += 2;
-                    break;
-                case 0: // HALT
-                    cpu.halted = true;
-                    break;
-                default:
-                    console.log("Unknown Instruction");
-                    cpu.halted = true;
-            }
-            updateUI();
-        }
-
-        function resetSim() {
-            cpu = { acc: 0, pc: 0, halted: false };
-            memory.fill(0);
-            initUI();
-        }
-
-        initUI();
-    </script>
 </body>
 </html>
