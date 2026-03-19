@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EdgeWeather | Global Forecast</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>EdgeWeather</h1>
+        <div class="search-box">
+            <input type="text" id="cityInput" placeholder="Enter city (e.g., London, Tokyo)...">
+            <button onclick="getWeather()">Check Weather</button>
+        </div>
+        <div id="weatherResult" class="card">
+            <h2 id="cityName">Search for a city!</h2>
+            <p id="temp">--°C</p>
+            <p id="desc">EdgeOne Powered Simulation</p>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
